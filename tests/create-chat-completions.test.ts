@@ -37,7 +37,7 @@ test("sets X-Initiator to agent if tool/assistant present", async () => {
   const headers = (
     fetchMock.mock.calls[0][1] as { headers: Record<string, string> }
   ).headers
-  expect(headers["X-Initiator"]).toBe("agent")
+  expect(headers["x-initiator"]).toBe("agent")
 })
 
 test("sets X-Initiator to user if only user present", async () => {
@@ -53,7 +53,7 @@ test("sets X-Initiator to user if only user present", async () => {
   const headers = (
     fetchMock.mock.calls[1][1] as { headers: Record<string, string> }
   ).headers
-  expect(headers["X-Initiator"]).toBe("user")
+  expect(headers["x-initiator"]).toBe("user")
 })
 
 test("forces X-Initiator to agent in all-agent mode", async () => {
@@ -69,7 +69,7 @@ test("forces X-Initiator to agent in all-agent mode", async () => {
     const headers = (
       fetchMock.mock.calls[2][1] as { headers: Record<string, string> }
     ).headers
-    expect(headers["X-Initiator"]).toBe("agent")
+    expect(headers["x-initiator"]).toBe("agent")
   } finally {
     state.forceAgentInitiator = false
   }

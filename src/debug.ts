@@ -5,7 +5,6 @@ import consola from "consola"
 import fs from "node:fs/promises"
 import os from "node:os"
 
-import { APP_NAME } from "./lib/app-info"
 import { PATHS } from "./lib/paths"
 
 interface DebugInfo {
@@ -82,7 +81,7 @@ async function getDebugInfo(): Promise<DebugInfo> {
 }
 
 function printDebugInfoPlain(info: DebugInfo): void {
-  consola.info(`${APP_NAME} debug
+  consola.info(`copilot-api debug
 
 Version: ${info.version}
 Runtime: ${info.runtime.name} ${info.runtime.version} (${info.runtime.platform} ${info.runtime.arch})

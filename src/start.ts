@@ -7,13 +7,18 @@ import { serve, type ServerHandler } from "srvx"
 import invariant from "tiny-invariant"
 
 import { APP_NAME, USAGE_VIEWER_URL } from "./lib/app-info"
+import { mergeConfigWithDefaults } from "./lib/config"
 import { ensurePaths } from "./lib/paths"
 import { initProxyFromEnv } from "./lib/proxy"
 import { generateEnvScript } from "./lib/shell"
 import { state } from "./lib/state"
 import { setupCopilotToken, setupGitHubToken } from "./lib/token"
-import { cacheModels, cacheVSCodeVersion } from "./lib/utils"
-import { server } from "./server"
+import {
+  cacheMacMachineId,
+  cacheModels,
+  cacheVSCodeVersion,
+  cacheVsCodeSessionId,
+} from "./lib/utils"
 
 interface RunServerOptions {
   port: number
@@ -30,10 +35,14 @@ interface RunServerOptions {
 }
 
 export async function runServer(options: RunServerOptions): Promise<void> {
+  // Ensure config is merged with defaults at startup
+  mergeConfigWithDefaults()
+
   if (options.proxyEnv) {
     initProxyFromEnv()
   }
 
+  state.verbose = options.verbose
   if (options.verbose) {
     consola.level = 5
     consola.info("Verbose logging enabled")
@@ -56,6 +65,8 @@ export async function runServer(options: RunServerOptions): Promise<void> {
 
   await ensurePaths()
   await cacheVSCodeVersion()
+  cacheMacMachineId()
+  cacheVsCodeSessionId()
 
   if (options.githubToken) {
     state.githubToken = options.githubToken
@@ -74,6 +85,11 @@ export async function runServer(options: RunServerOptions): Promise<void> {
   const serverUrl = `http://localhost:${options.port}`
 
   if (options.claudeCode) {
+    consola.log(
+      "\n💡 Tip: The --claude-code flag simply generates a clipboard command for launching Claude Code. \n"
+        + "All models remain fully accessible without this flag, just configure the model ID directly in your settings.json file.",
+    )
+
     invariant(state.models, "Models should be loaded by now")
 
     const selectedModel = await consola.prompt(
@@ -98,10 +114,11 @@ export async function runServer(options: RunServerOptions): Promise<void> {
         ANTHROPIC_AUTH_TOKEN: "dummy",
         ANTHROPIC_MODEL: selectedModel,
         ANTHROPIC_DEFAULT_SONNET_MODEL: selectedModel,
-        ANTHROPIC_SMALL_FAST_MODEL: selectedSmallModel,
         ANTHROPIC_DEFAULT_HAIKU_MODEL: selectedSmallModel,
         DISABLE_NON_ESSENTIAL_MODEL_CALLS: "1",
         CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
+        CLAUDE_CODE_ATTRIBUTION_HEADER: "0",
+        CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION: "false",
       },
       "claude",
     )
@@ -121,9 +138,14 @@ export async function runServer(options: RunServerOptions): Promise<void> {
     `🌐 ${APP_NAME} Usage Viewer: ${USAGE_VIEWER_URL}?endpoint=${serverUrl}/usage`,
   )
 
+  const { server } = await import("./server")
+
   serve({
     fetch: server.fetch as ServerHandler,
     port: options.port,
+    bun: {
+      idleTimeout: 0,
+    },
   })
 }
 

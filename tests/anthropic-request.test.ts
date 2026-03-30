@@ -136,6 +136,8 @@ describe("Anthropic to OpenAI translation logic", () => {
             {
               type: "thinking",
               thinking: "Let me think about this simple math problem...",
+              // Note: thinking blocks without signatures are filtered for claude models
+              signature: "",
             },
             { type: "text", text: "2+2 equals 4." },
           ],
@@ -146,12 +148,10 @@ describe("Anthropic to OpenAI translation logic", () => {
     const openAIPayload = translateToOpenAI(anthropicPayload)
     expect(isValidChatCompletionRequest(openAIPayload)).toBe(true)
 
-    // Check that thinking content is combined with text content
+    // Thinking blocks without valid signatures are filtered for claude models.
+    // Text content should still be present.
     const assistantMessage = openAIPayload.messages.find(
       (m) => m.role === "assistant",
-    )
-    expect(assistantMessage?.content).toContain(
-      "Let me think about this simple math problem...",
     )
     expect(assistantMessage?.content).toContain("2+2 equals 4.")
   })
@@ -168,6 +168,8 @@ describe("Anthropic to OpenAI translation logic", () => {
               type: "thinking",
               thinking:
                 "I need to call the weather API to get current weather information.",
+              // Note: thinking blocks without signatures are filtered for claude models
+              signature: "",
             },
             { type: "text", text: "I'll check the weather for you." },
             {
@@ -184,12 +186,10 @@ describe("Anthropic to OpenAI translation logic", () => {
     const openAIPayload = translateToOpenAI(anthropicPayload)
     expect(isValidChatCompletionRequest(openAIPayload)).toBe(true)
 
-    // Check that thinking content is included in the message content
+    // Thinking blocks without valid signatures are filtered for claude models.
+    // Text content and tool calls should still be present.
     const assistantMessage = openAIPayload.messages.find(
       (m) => m.role === "assistant",
-    )
-    expect(assistantMessage?.content).toContain(
-      "I need to call the weather API",
     )
     expect(assistantMessage?.content).toContain(
       "I'll check the weather for you.",
