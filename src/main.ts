@@ -2,6 +2,7 @@
 
 import { defineCommand, runMain } from "citty"
 
+import { APP_NAME } from "./lib/app-info"
 import { auth } from "./auth"
 import { checkUsage } from "./check-usage"
 import { debug } from "./debug"
@@ -9,9 +10,9 @@ import { start } from "./start"
 
 const main = defineCommand({
   meta: {
-    name: "copilot-api",
+    name: APP_NAME,
     description:
-      "A wrapper around GitHub Copilot API to make it OpenAI compatible, making it usable for other tools.",
+      `${APP_NAME} wraps GitHub Copilot API and exposes an OpenAI/Anthropic-compatible interface.`,
   },
   subCommands: { auth, start, "check-usage": checkUsage, debug },
 })

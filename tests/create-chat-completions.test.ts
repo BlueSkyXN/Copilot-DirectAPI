@@ -9,6 +9,7 @@ import { createChatCompletions } from "../src/services/copilot/create-chat-compl
 state.copilotToken = "test-token"
 state.vsCodeVersion = "1.0.0"
 state.accountType = "individual"
+state.forceAgentInitiator = false
 
 // Helper to mock fetch
 const fetchMock = mock(
@@ -53,4 +54,23 @@ test("sets X-Initiator to user if only user present", async () => {
     fetchMock.mock.calls[1][1] as { headers: Record<string, string> }
   ).headers
   expect(headers["X-Initiator"]).toBe("user")
+})
+
+test("forces X-Initiator to agent in all-agent mode", async () => {
+  state.forceAgentInitiator = true
+
+  try {
+    const payload: ChatCompletionsPayload = {
+      messages: [{ role: "user", content: "hi" }],
+      model: "gpt-test",
+    }
+    await createChatCompletions(payload)
+    expect(fetchMock).toHaveBeenCalled()
+    const headers = (
+      fetchMock.mock.calls[2][1] as { headers: Record<string, string> }
+    ).headers
+    expect(headers["X-Initiator"]).toBe("agent")
+  } finally {
+    state.forceAgentInitiator = false
+  }
 })

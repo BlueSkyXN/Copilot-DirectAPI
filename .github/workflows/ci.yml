@@ -30,3 +30,15 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-directapi-dist-${{ github.sha }}
+          path: |
+            dist
+            package.json
+            README.md
+            LICENSE
+          if-no-files-found: error
+          retention-days: 14

@@ -1,4 +1,4 @@
-# Copilot API Proxy
+# Copilot-DirectAPI
 
 > [!WARNING]
 > This is a reverse-engineered proxy of GitHub Copilot API. It is not supported by GitHub, and may break unexpectedly. Use at your own risk.
@@ -27,13 +27,13 @@
 
 ## Project Overview
 
-A reverse-engineered proxy for the GitHub Copilot API that exposes it as an OpenAI and Anthropic compatible service. This allows you to use GitHub Copilot with any tool that supports the OpenAI Chat Completions API or the Anthropic Messages API, including to power [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview).
+Copilot-DirectAPI is a reverse-engineered proxy for the GitHub Copilot API that exposes it as an OpenAI and Anthropic compatible service. This allows you to use GitHub Copilot with any tool that supports the OpenAI Chat Completions API or the Anthropic Messages API, including to power [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview).
 
 ## Features
 
 - **OpenAI & Anthropic Compatibility**: Exposes GitHub Copilot as an OpenAI-compatible (`/v1/chat/completions`, `/v1/models`, `/v1/embeddings`) and Anthropic-compatible (`/v1/messages`) API.
 - **Claude Code Integration**: Easily configure and launch [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) to use Copilot as its backend with a simple command-line flag (`--claude-code`).
-- **Usage Dashboard**: A web-based dashboard to monitor your Copilot API usage, view quotas, and see detailed statistics.
+- **Usage Dashboard**: A web-based dashboard to monitor your Copilot-DirectAPI usage, view quotas, and see detailed statistics.
 - **Rate Limit Control**: Manage API usage with rate-limiting options (`--rate-limit`) and a waiting mechanism (`--wait`) to prevent errors from rapid requests.
 - **Manual Request Approval**: Manually approve or deny each API request for fine-grained control over usage (`--manual`).
 - **Token Visibility**: Option to display GitHub and Copilot tokens during authentication and refresh for debugging (`--show-token`).
@@ -62,7 +62,7 @@ bun install
 Build image
 
 ```sh
-docker build -t copilot-api .
+docker build -t copilot-directapi .
 ```
 
 Run the container
@@ -74,11 +74,11 @@ mkdir -p ./copilot-data
 # Run the container with a bind mount to persist the token
 # This ensures your authentication survives container restarts
 
-docker run -p 4141:4141 -v $(pwd)/copilot-data:/root/.local/share/copilot-api copilot-api
+docker run -p 4141:4141 -v $(pwd)/copilot-data:/root/.local/share/Copilot-DirectAPI copilot-directapi
 ```
 
 > **Note:**
-> The GitHub token and related data will be stored in `copilot-data` on your host. This is mapped to `/root/.local/share/copilot-api` inside the container, ensuring persistence across restarts.
+> The GitHub token and related data will be stored in `copilot-data` on your host. This is mapped to `/root/.local/share/Copilot-DirectAPI` inside the container, ensuring persistence across restarts. Existing data from the old `copilot-api` path is migrated automatically.
 
 ### Docker with Environment Variables
 
@@ -86,13 +86,13 @@ You can pass the GitHub token directly to the container using environment variab
 
 ```sh
 # Build with GitHub token
-docker build --build-arg GH_TOKEN=your_github_token_here -t copilot-api .
+docker build --build-arg GH_TOKEN=your_github_token_here -t copilot-directapi .
 
 # Run with GitHub token
-docker run -p 4141:4141 -e GH_TOKEN=your_github_token_here copilot-api
+docker run -p 4141:4141 -e GH_TOKEN=your_github_token_here copilot-directapi
 
 # Run with additional options
-docker run -p 4141:4141 -e GH_TOKEN=your_token copilot-api start --verbose --port 4141
+docker run -p 4141:4141 -e GH_TOKEN=your_token copilot-directapi start --verbose --port 4141
 ```
 
 ### Docker Compose Example
@@ -100,7 +100,7 @@ docker run -p 4141:4141 -e GH_TOKEN=your_token copilot-api start --verbose --por
 ```yaml
 version: "3.8"
 services:
-  copilot-api:
+  copilot-directapi:
     build: .
     ports:
       - "4141:4141"
@@ -120,27 +120,29 @@ The Docker image includes:
 
 You can run the project directly using npx:
 
+The published package name is `copilot-directapi`. The CLI binary name is `Copilot-DirectAPI`.
+
 ```sh
-npx copilot-api@latest start
+npx copilot-directapi@latest start
 ```
 
 With options:
 
 ```sh
-npx copilot-api@latest start --port 8080
+npx copilot-directapi@latest start --port 8080
 ```
 
 For authentication only:
 
 ```sh
-npx copilot-api@latest auth
+npx copilot-directapi@latest auth
 ```
 
 ## Command Structure
 
-Copilot API now uses a subcommand structure with these main commands:
+Copilot-DirectAPI now uses a subcommand structure with these main commands:
 
-- `start`: Start the Copilot API server. This command will also handle authentication if needed.
+- `start`: Start the Copilot-DirectAPI server. This command will also handle authentication if needed.
 - `auth`: Run GitHub authentication flow without starting the server. This is typically used if you need to generate a token for use with the `--github-token` option, especially in non-interactive environments.
 - `check-usage`: Show your current GitHub Copilot usage and quota information directly in the terminal (no server required).
 - `debug`: Display diagnostic information including version, runtime details, file paths, and authentication status. Useful for troubleshooting and support.
@@ -156,11 +158,12 @@ The following command line options are available for the `start` command:
 | --port         | Port to listen on                                                             | 4141       | -p    |
 | --verbose      | Enable verbose logging                                                        | false      | -v    |
 | --account-type | Account type to use (individual, business, enterprise)                        | individual | -a    |
+| --all-agent    | Always send `X-Initiator=agent` for compatibility debugging                   | false      | none  |
 | --manual       | Enable manual request approval                                                | false      | none  |
 | --rate-limit   | Rate limit in seconds between requests                                        | none       | -r    |
 | --wait         | Wait instead of error when rate limit is hit                                  | false      | -w    |
 | --github-token | Provide GitHub token directly (must be generated using the `auth` subcommand) | none       | -g    |
-| --claude-code  | Generate a command to launch Claude Code with Copilot API config              | false      | -c    |
+| --claude-code  | Generate a command to launch Claude Code with Copilot-DirectAPI config        | false      | -c    |
 | --show-token   | Show GitHub and Copilot tokens on fetch and refresh                           | false      | none  |
 | --proxy-env    | Initialize proxy from environment variables                                   | false      | none  |
 
@@ -179,7 +182,7 @@ The following command line options are available for the `start` command:
 
 ## API Endpoints
 
-The server exposes several endpoints to interact with the Copilot API. It provides OpenAI-compatible endpoints and now also includes support for Anthropic-compatible endpoints, allowing for greater flexibility with different tools and services.
+The server exposes several endpoints to interact with GitHub Copilot through Copilot-DirectAPI. It provides OpenAI-compatible endpoints and also includes support for Anthropic-compatible endpoints, allowing for greater flexibility with different tools and services.
 
 ### OpenAI Compatible Endpoints
 
@@ -215,58 +218,61 @@ Using with npx:
 
 ```sh
 # Basic usage with start command
-npx copilot-api@latest start
+npx copilot-directapi@latest start
 
 # Run on custom port with verbose logging
-npx copilot-api@latest start --port 8080 --verbose
+npx copilot-directapi@latest start --port 8080 --verbose
 
 # Use with a business plan GitHub account
-npx copilot-api@latest start --account-type business
+npx copilot-directapi@latest start --account-type business
 
 # Use with an enterprise plan GitHub account
-npx copilot-api@latest start --account-type enterprise
+npx copilot-directapi@latest start --account-type enterprise
+
+# Force X-Initiator=agent on every request for compatibility debugging
+npx copilot-directapi@latest start --all-agent
 
 # Enable manual approval for each request
-npx copilot-api@latest start --manual
+npx copilot-directapi@latest start --manual
 
 # Set rate limit to 30 seconds between requests
-npx copilot-api@latest start --rate-limit 30
+npx copilot-directapi@latest start --rate-limit 30
 
 # Wait instead of error when rate limit is hit
-npx copilot-api@latest start --rate-limit 30 --wait
+npx copilot-directapi@latest start --rate-limit 30 --wait
 
 # Provide GitHub token directly
-npx copilot-api@latest start --github-token ghp_YOUR_TOKEN_HERE
+npx copilot-directapi@latest start --github-token ghp_YOUR_TOKEN_HERE
 
 # Run only the auth flow
-npx copilot-api@latest auth
+npx copilot-directapi@latest auth
 
 # Run auth flow with verbose logging
-npx copilot-api@latest auth --verbose
+npx copilot-directapi@latest auth --verbose
 
 # Show your Copilot usage/quota in the terminal (no server needed)
-npx copilot-api@latest check-usage
+npx copilot-directapi@latest check-usage
 
 # Display debug information for troubleshooting
-npx copilot-api@latest debug
+npx copilot-directapi@latest debug
 
 # Display debug information in JSON format
-npx copilot-api@latest debug --json
+npx copilot-directapi@latest debug --json
 
 # Initialize proxy from environment variables (HTTP_PROXY, HTTPS_PROXY, etc.)
-npx copilot-api@latest start --proxy-env
+npx copilot-directapi@latest start --proxy-env
 ```
 
 ## Using the Usage Viewer
 
-After starting the server, a URL to the Copilot Usage Dashboard will be displayed in your console. This dashboard is a web interface for monitoring your API usage.
+After starting the server, a URL to the Copilot-DirectAPI Usage Dashboard will be displayed in your console. This dashboard is a web interface for monitoring your API usage.
 
 1.  Start the server. For example, using npx:
     ```sh
-    npx copilot-api@latest start
+    npx copilot-directapi@latest start
     ```
 2.  The server will output a URL to the usage viewer. Copy and paste this URL into your browser. It will look something like this:
-    `https://ericc-ch.github.io/copilot-api?endpoint=http://localhost:4141/usage`
+    `https://blueskyxn.github.io/Copilot-DirectAPI/?endpoint=http://localhost:4141/usage`
     - If you use the `start.bat` script on Windows, this page will open automatically.
 
 The dashboard provides a user-friendly interface to view your Copilot usage data:
@@ -276,7 +282,7 @@ The dashboard provides a user-friendly interface to view your Copilot usage data
 - **Usage Quotas**: View a summary of your usage quotas for different services like Chat and Completions, displayed with progress bars for a quick overview.
 - **Detailed Information**: See the full JSON response from the API for a detailed breakdown of all available usage statistics.
 - **URL-based Configuration**: You can also specify the API endpoint directly in the URL using a query parameter. This is useful for bookmarks or sharing links. For example:
-  `https://ericc-ch.github.io/copilot-api?endpoint=http://your-api-server/usage`
+  `https://blueskyxn.github.io/Copilot-DirectAPI/?endpoint=http://your-api-server/usage`
 
 ## Using with Claude Code
 
@@ -289,7 +295,7 @@ There are two ways to configure Claude Code to use this proxy:
 To get started, run the `start` command with the `--claude-code` flag:
 
 ```sh
-npx copilot-api@latest start --claude-code
+npx copilot-directapi@latest start --claude-code
 ```
 
 You will be prompted to select a primary model and a "small, fast" model for background tasks. After selecting the models, a command will be copied to your clipboard. This command sets the necessary environment variables for Claude Code to use the proxy.
@@ -346,6 +352,6 @@ bun run start
 
 - To avoid hitting GitHub Copilot's rate limits, you can use the following flags:
   - `--manual`: Enables manual approval for each request, giving you full control over when requests are sent.
-  - `--rate-limit <seconds>`: Enforces a minimum time interval between requests. For example, `copilot-api start --rate-limit 30` will ensure there's at least a 30-second gap between requests.
+  - `--rate-limit <seconds>`: Enforces a minimum time interval between requests. For example, `Copilot-DirectAPI start --rate-limit 30` will ensure there's at least a 30-second gap between requests.
   - `--wait`: Use this with `--rate-limit`. It makes the server wait for the cooldown period to end instead of rejecting the request with an error. This is useful for clients that don't automatically retry on rate limit errors.
 - If you have a GitHub business or enterprise plan account with Copilot, use the `--account-type` flag (e.g., `--account-type business`). See the [official documentation](https://docs.github.com/en/enterprise-cloud@latest/copilot/managing-copilot/managing-github-copilot-in-your-organization/managing-access-to-github-copilot-in-your-organization/managing-github-copilot-access-to-your-organizations-network#configuring-copilot-subscription-based-network-routing-for-your-enterprise-or-organization) for more details.

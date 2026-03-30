@@ -8,6 +8,7 @@ export interface State {
   models?: ModelsResponse
   vsCodeVersion?: string
 
+  forceAgentInitiator: boolean
   manualApprove: boolean
   rateLimitWait: boolean
   showToken: boolean
@@ -19,6 +20,7 @@ export interface State {
 
 export const state: State = {
   accountType: "individual",
+  forceAgentInitiator: false,
   manualApprove: false,
   rateLimitWait: false,
   showToken: false,

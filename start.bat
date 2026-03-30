@@ -1,6 +1,6 @@
 @echo off
 echo ================================================
-echo GitHub Copilot API Server with Usage Viewer
+echo Copilot-DirectAPI Server with Usage Viewer
 echo ================================================
 echo.
 
@@ -14,7 +14,7 @@ echo Starting server...
 echo The usage viewer page will open automatically after the server starts
 echo.
 
-start "" "https://ericc-ch.github.io/copilot-api?endpoint=http://localhost:4141/usage"
+start "" "https://blueskyxn.github.io/Copilot-DirectAPI/?endpoint=http://localhost:4141/usage"
 bun run dev
 
 pause

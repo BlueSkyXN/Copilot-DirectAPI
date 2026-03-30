@@ -6,6 +6,7 @@ import consola from "consola"
 import { serve, type ServerHandler } from "srvx"
 import invariant from "tiny-invariant"
 
+import { APP_NAME, USAGE_VIEWER_URL } from "./lib/app-info"
 import { ensurePaths } from "./lib/paths"
 import { initProxyFromEnv } from "./lib/proxy"
 import { generateEnvScript } from "./lib/shell"
@@ -18,6 +19,7 @@ interface RunServerOptions {
   port: number
   verbose: boolean
   accountType: string
+  allAgent: boolean
   manual: boolean
   rateLimit?: number
   rateLimitWait: boolean
@@ -38,8 +40,13 @@ export async function runServer(options: RunServerOptions): Promise<void> {
   }
 
   state.accountType = options.accountType
+  state.forceAgentInitiator = options.allAgent
   if (options.accountType !== "individual") {
     consola.info(`Using ${options.accountType} plan GitHub account`)
+  }
+
+  if (options.allAgent) {
+    consola.info("All-agent mode enabled: forcing X-Initiator=agent")
   }
 
   state.manualApprove = options.manual
@@ -111,7 +118,7 @@ export async function runServer(options: RunServerOptions): Promise<void> {
   }
 
   consola.box(
-    `🌐 Usage Viewer: https://ericc-ch.github.io/copilot-api?endpoint=${serverUrl}/usage`,
+    `🌐 ${APP_NAME} Usage Viewer: ${USAGE_VIEWER_URL}?endpoint=${serverUrl}/usage`,
   )
 
   serve({
@@ -123,7 +130,7 @@ export async function runServer(options: RunServerOptions): Promise<void> {
 export const start = defineCommand({
   meta: {
     name: "start",
-    description: "Start the Copilot API server",
+    description: `Start the ${APP_NAME} server`,
   },
   args: {
     port: {
@@ -143,6 +150,11 @@ export const start = defineCommand({
       type: "string",
       default: "individual",
       description: "Account type to use (individual, business, enterprise)",
+    },
+    "all-agent": {
+      type: "boolean",
+      default: false,
+      description: "Always send X-Initiator=agent for compatibility debugging",
     },
     manual: {
       type: "boolean",
@@ -172,7 +184,7 @@ export const start = defineCommand({
       type: "boolean",
       default: false,
       description:
-        "Generate a command to launch Claude Code with Copilot API config",
+        `Generate a command to launch Claude Code with ${APP_NAME} config`,
     },
     "show-token": {
       type: "boolean",
@@ -195,6 +207,7 @@ export const start = defineCommand({
       port: Number.parseInt(args.port, 10),
       verbose: args.verbose,
       accountType: args["account-type"],
+      allAgent: args["all-agent"],
       manual: args.manual,
       rateLimit,
       rateLimitWait: args.wait,
