@@ -8,7 +8,9 @@ export interface State {
   models?: ModelsResponse
   vsCodeVersion?: string
 
-  forceAgentInitiator: boolean
+  macMachineId?: string
+  vsCodeSessionId?: string
+
   manualApprove: boolean
   rateLimitWait: boolean
   showToken: boolean
@@ -16,12 +18,16 @@ export interface State {
   // Rate limiting configuration
   rateLimitSeconds?: number
   lastRequestTimestamp?: number
+  verbose: boolean
+
+  // BlueSkyXN: force all requests to use agent initiator
+  forceAgentInitiator?: boolean
 }
 
 export const state: State = {
   accountType: "individual",
-  forceAgentInitiator: false,
   manualApprove: false,
   rateLimitWait: false,
   showToken: false,
+  verbose: false,
 }

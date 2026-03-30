@@ -1,14 +1,30 @@
 import consola from "consola"
 import { events } from "fetch-event-stream"
+import { randomUUID } from "node:crypto"
 
-import { copilotHeaders, copilotBaseUrl } from "~/lib/api-config"
+import type { SubagentMarker } from "~/routes/messages/subagent-marker"
+
+import {
+  copilotBaseUrl,
+  copilotHeaders,
+  prepareForCompact,
+  prepareInteractionHeaders,
+} from "~/lib/api-config"
 import { HTTPError } from "~/lib/error"
 import { state } from "~/lib/state"
 
 export const createChatCompletions = async (
   payload: ChatCompletionsPayload,
+  options: {
+    subagentMarker?: SubagentMarker | null
+    requestId?: string
+    sessionId?: string
+    isCompact?: boolean
+  } = {},
 ) => {
   if (!state.copilotToken) throw new Error("Copilot token not found")
+
+  const requestId = options.requestId ?? randomUUID()
 
   const enableVision = payload.messages.some(
     (x) =>
@@ -16,17 +32,30 @@ export const createChatCompletions = async (
       && x.content?.some((x) => x.type === "image_url"),
   )
 
-  // Agent/user check for X-Initiator header
-  // Determine if any message is from an agent ("assistant" or "tool")
-  const isAgentCall =
-    state.forceAgentInitiator
-    || payload.messages.some((msg) => ["assistant", "tool"].includes(msg.role))
-
-  // Build headers and add X-Initiator
-  const headers: Record<string, string> = {
-    ...copilotHeaders(state, enableVision),
-    "X-Initiator": isAgentCall ? "agent" : "user",
+  // Agent/user check for x-initiator header
+  // Refactor `isAgentCall` logic to check only the last message in the history rather than any message.
+  // BlueSkyXN: support forceAgentInitiator flag to force agent initiator for all requests
+  let isAgentCall = state.forceAgentInitiator ?? false
+  if (!isAgentCall && payload.messages.length > 0) {
+    const lastMessage = payload.messages.at(-1)
+    if (lastMessage) {
+      isAgentCall = ["assistant", "tool"].includes(lastMessage.role)
+    }
   }
+
+  // Build headers and add x-initiator
+  const headers: Record<string, string> = {
+    ...copilotHeaders(state, requestId, enableVision),
+    "x-initiator": isAgentCall ? "agent" : "user",
+  }
+
+  prepareInteractionHeaders(
+    options.sessionId,
+    Boolean(options.subagentMarker),
+    headers,
+  )
+
+  prepareForCompact(headers, options.isCompact)
 
   const response = await fetch(`${copilotBaseUrl(state)}/chat/completions`, {
     method: "POST",
@@ -69,7 +98,7 @@ export interface ChatCompletionChunk {
   }
 }
 
-interface Delta {
+export interface Delta {
   content?: string | null
   role?: "user" | "assistant" | "system" | "tool"
   tool_calls?: Array<{
@@ -81,9 +110,11 @@ interface Delta {
       arguments?: string
     }
   }>
+  reasoning_text?: string | null
+  reasoning_opaque?: string | null
 }
 
-interface Choice {
+export interface Choice {
   index: number
   delta: Delta
   finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | null
@@ -112,6 +143,8 @@ export interface ChatCompletionResponse {
 interface ResponseMessage {
   role: "assistant"
   content: string | null
+  reasoning_text?: string | null
+  reasoning_opaque?: string | null
   tool_calls?: Array<ToolCall>
 }
 
@@ -148,6 +181,7 @@ export interface ChatCompletionsPayload {
     | { type: "function"; function: { name: string } }
     | null
   user?: string | null
+  thinking_budget?: number
 }
 
 export interface Tool {
@@ -166,6 +200,8 @@ export interface Message {
   name?: string
   tool_calls?: Array<ToolCall>
   tool_call_id?: string
+  reasoning_text?: string | null
+  reasoning_opaque?: string | null
 }
 
 export interface ToolCall {
