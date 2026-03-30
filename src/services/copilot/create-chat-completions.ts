@@ -18,9 +18,9 @@ export const createChatCompletions = async (
 
   // Agent/user check for X-Initiator header
   // Determine if any message is from an agent ("assistant" or "tool")
-  const isAgentCall = state.forceAgentInitiator || payload.messages.some((msg) =>
-    ["assistant", "tool"].includes(msg.role),
-  )
+  const isAgentCall =
+    state.forceAgentInitiator
+    || payload.messages.some((msg) => ["assistant", "tool"].includes(msg.role))
 
   // Build headers and add X-Initiator
   const headers: Record<string, string> = {

@@ -183,8 +183,7 @@ export const start = defineCommand({
       alias: "c",
       type: "boolean",
       default: false,
-      description:
-        `Generate a command to launch Claude Code with ${APP_NAME} config`,
+      description: `Generate a command to launch Claude Code with ${APP_NAME} config`,
     },
     "show-token": {
       type: "boolean",
