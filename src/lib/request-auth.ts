@@ -58,7 +58,7 @@ export function extractRequestApiKey(c: Context): string | null {
 }
 
 function createUnauthorizedResponse(c: Context): Response {
-  c.header("WWW-Authenticate", 'Bearer realm="copilot-api"')
+  c.header("WWW-Authenticate", 'Bearer realm="Copilot-DirectAPI"')
   return c.json(
     {
       error: {
